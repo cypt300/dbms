@@ -1,0 +1,45 @@
+DROP PROCEDURE extract_employee_data;
+
+DELIMITER //
+
+CREATE PROCEDURE extract_employee_data()
+BEGIN
+    DECLARE emp_id INT;
+    DECLARE emp_name VARCHAR(255);
+    DECLARE emp_age INT;
+    DECLARE emp_salary DECIMAL(10,2);
+
+    DECLARE done INT DEFAULT FALSE;
+
+    DECLARE emp_cursor CURSOR FOR
+        SELECT E_id, E_name, Age, Salary FROM Employee3;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND
+        SET done = TRUE;
+
+    OPEN emp_cursor;
+
+    read_loop: LOOP
+
+        FETCH emp_cursor INTO emp_id, emp_name, emp_age, emp_salary;
+
+        IF done THEN
+            LEAVE read_loop;
+        END IF;
+
+        SELECT CONCAT(
+            'Employee ID: ', emp_id,
+            ', Employee Name: ', emp_name,
+            ', Age: ', emp_age,
+            ', Salary: ', emp_salary
+        ) AS Employee_Data;
+
+    END LOOP;
+
+    CLOSE emp_cursor;
+
+END//
+
+DELIMITER ;
+
+CALL extract_employee_data();

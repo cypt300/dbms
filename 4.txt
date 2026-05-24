@@ -1,0 +1,63 @@
+CREATE TABLE CUSTOMERS (
+    ID INT PRIMARY KEY,
+    NAME VARCHAR(50),
+    AGE INT,
+    ADDRESS VARCHAR(255),
+    SALARY DECIMAL(10,2)
+);
+
+INSERT INTO CUSTOMERS (ID, NAME, AGE, ADDRESS, SALARY)
+VALUES
+(1, 'John Doe', 30, '123 Main Street, Anytown, USA', 50000.00),
+(2, 'Jane Smith', 25, '456 Elm Street, Otherville, USA', 60000.00),
+(3, 'Alice Johnson', 35, '789 Oak Street, Springfield, USA', 70000.00),
+(4, 'Bob Brown', 40, '101 Pine Street, Greenvale, USA', 80000.00),
+(5, 'Emily Davis', 28, '222 Maple Street, Riverdale, USA', 55000.00);
+
+CREATE TABLE salary_change_log (
+    log_id INT AUTO_INCREMENT PRIMARY KEY,
+    message TEXT,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+DELIMITER $$
+
+CREATE TRIGGER salary_change_trigger
+BEFORE INSERT ON CUSTOMERS
+FOR EACH ROW
+BEGIN
+    INSERT INTO salary_change_log (message)
+    VALUES (CONCAT('New salary: ', NEW.SALARY));
+END$$
+
+CREATE TRIGGER salary_change_trigger_update
+BEFORE UPDATE ON CUSTOMERS
+FOR EACH ROW
+BEGIN
+    DECLARE old_salary DECIMAL(10,2);
+    DECLARE new_salary DECIMAL(10,2);
+
+    SET old_salary = (SELECT SALARY FROM CUSTOMERS WHERE ID = OLD.ID);
+    SET new_salary = NEW.SALARY;
+
+    INSERT INTO salary_change_log (message)
+    VALUES (
+        CONCAT(
+            'Old salary: ', old_salary, '\n',
+            'New salary: ', new_salary, '\n',
+            'Salary difference: ', new_salary - old_salary
+        )
+    );
+END$$
+
+CREATE TRIGGER salary_change_trigger_delete
+BEFORE DELETE ON CUSTOMERS
+FOR EACH ROW
+BEGIN
+    INSERT INTO salary_change_log (message)
+    VALUES (CONCAT('Salary being deleted: ', OLD.SALARY));
+END$$
+
+DELIMITER ;
+
+SELECT * FROM salary_change_log;
